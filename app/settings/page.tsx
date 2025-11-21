@@ -3,85 +3,89 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/utils/supabase';
 import Sidebar from '@/components/Sidebar';
-import { Menu, Settings, Plus, Trash2, Save, X, Edit2 } from 'lucide-react';
+import { Menu, Settings, Plus, Trash2, Save, X, Edit2, Package, Link } from 'lucide-react';
 
 export default function SettingsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [services, setServices] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [inventory, setInventory] = useState<any[]>([]); // รายการของในคลัง
+  
+  // Modals
+  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
+  const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false); // Modal ผูกสูตร
 
-  // State สำหรับ Modal (เพิ่ม/แก้ไข)
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<any>(null);
   const [formData, setFormData] = useState({ name: '', price: '', duration: '60' });
+  
+  // Recipe States
+  const [currentRecipes, setCurrentRecipes] = useState<any[]>([]); // สูตรปัจจุบันของบริการที่เลือก
+  const [newRecipe, setNewRecipe] = useState({ inventory_id: '', quantity: '1' });
 
-  // ดึงข้อมูลบริการ
-  const fetchServices = async () => {
-    setLoading(true);
-    const { data } = await supabase.from('services').select('*').order('id');
-    if (data) setServices(data);
-    setLoading(false);
+  const fetchData = async () => {
+    const { data: sData } = await supabase.from('services').select('*').order('id');
+    if (sData) setServices(sData);
+    
+    const { data: iData } = await supabase.from('inventory').select('*').order('name');
+    if (iData) setInventory(iData);
   };
 
-  useEffect(() => { fetchServices(); }, []);
+  useEffect(() => { fetchData(); }, []);
 
-  // เปิด Modal (ถ้ามี service ส่งมา แปลว่าแก้ไข)
-  const openModal = (service: any = null) => {
+  // --- Service Functions ---
+  const openServiceModal = (service: any = null) => {
     setEditingService(service);
     if (service) {
       setFormData({ name: service.name, price: service.price, duration: service.duration });
     } else {
       setFormData({ name: '', price: '', duration: '60' });
     }
-    setIsModalOpen(true);
+    setIsServiceModalOpen(true);
   };
 
-  // บันทึกข้อมูล (เพิ่ม หรือ แก้ไข)
-  const handleSave = async () => {
-    if (!formData.name || !formData.price) return alert('กรุณากรอกข้อมูลให้ครบ');
-
-    const payload = {
-      name: formData.name,
-      price: Number(formData.price),
-      duration: Number(formData.duration)
-    };
-
-    let error;
+  const handleSaveService = async () => {
+    const payload = { name: formData.name, price: Number(formData.price), duration: Number(formData.duration) };
     if (editingService) {
-      // แก้ไข
-      const { error: updateError } = await supabase
-        .from('services')
-        .update(payload)
-        .eq('id', editingService.id);
-      error = updateError;
+      await supabase.from('services').update(payload).eq('id', editingService.id);
     } else {
-      // เพิ่มใหม่
-      const { error: insertError } = await supabase
-        .from('services')
-        .insert([payload]);
-      error = insertError;
+      await supabase.from('services').insert([payload]);
     }
-
-    if (!error) {
-      alert('✅ บันทึกเรียบร้อย');
-      setIsModalOpen(false);
-      fetchServices();
-    } else {
-      alert('❌ เกิดข้อผิดพลาด: ' + error.message);
-    }
+    setIsServiceModalOpen(false);
+    fetchData();
   };
 
-  // ลบรายการ
-  const handleDelete = async (id: number) => {
-    if (!confirm('⚠️ ยืนยันลบบริการนี้? (จะไม่สามารถเลือกในหน้าจองได้อีก)')) return;
+  const handleDeleteService = async (id: number) => {
+    if (!confirm('ลบบริการนี้?')) return;
+    await supabase.from('services').delete().eq('id', id);
+    fetchData();
+  };
+
+  // --- Recipe Functions (ผูกสูตร) ---
+  const openRecipeModal = async (service: any) => {
+    setEditingService(service);
+    // ดึงสูตรที่มีอยู่แล้วมาโชว์
+    const { data } = await supabase
+      .from('service_recipes')
+      .select('id, inventory_id, quantity_used, inventory(name, unit)')
+      .eq('service_id', service.id);
     
-    const { error } = await supabase.from('services').delete().eq('id', id);
-    
-    if (!error) {
-      fetchServices();
-    } else {
-      alert('❌ ลบไม่ได้ (อาจมีการใช้งานในประวัติการจองแล้ว)');
-    }
+    if (data) setCurrentRecipes(data);
+    setNewRecipe({ inventory_id: '', quantity: '1' });
+    setIsRecipeModalOpen(true);
+  };
+
+  const handleAddRecipe = async () => {
+    if (!newRecipe.inventory_id) return;
+    await supabase.from('service_recipes').insert([{
+      service_id: editingService.id,
+      inventory_id: Number(newRecipe.inventory_id),
+      quantity_used: Number(newRecipe.quantity)
+    }]);
+    openRecipeModal(editingService); // รีโหลดสูตร
+  };
+
+  const handleDeleteRecipe = async (recipeId: number) => {
+    await supabase.from('service_recipes').delete().eq('id', recipeId);
+    openRecipeModal(editingService); // รีโหลดสูตร
   };
 
   return (
@@ -97,7 +101,7 @@ export default function SettingsPage() {
             </h1>
           </div>
           <button 
-            onClick={() => openModal()}
+            onClick={() => openServiceModal()}
             className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 flex items-center gap-2 font-bold"
           >
             <Plus size={18} /> เพิ่มบริการใหม่
@@ -110,8 +114,8 @@ export default function SettingsPage() {
               <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 text-sm uppercase tracking-wider">
                 <tr>
                   <th className="p-6 font-semibold">ชื่อบริการ</th>
-                  <th className="p-6 font-semibold">ราคา (บาท)</th>
-                  <th className="p-6 font-semibold">เวลา (นาที)</th>
+                  <th className="p-6 font-semibold">ราคา</th>
+                  <th className="p-6 font-semibold">เวลา</th>
                   <th className="p-6 font-semibold text-right">จัดการ</th>
                 </tr>
               </thead>
@@ -119,13 +123,19 @@ export default function SettingsPage() {
                 {services.map((s) => (
                   <tr key={s.id} className="hover:bg-slate-50 transition">
                     <td className="p-6 font-bold text-slate-700">{s.name}</td>
-                    <td className="p-6 text-indigo-600 font-bold">฿{s.price.toLocaleString()}</td>
+                    <td className="p-6 text-indigo-600 font-bold">฿{s.price}</td>
                     <td className="p-6 text-slate-500">{s.duration} นาที</td>
                     <td className="p-6 text-right flex justify-end gap-2">
-                      <button onClick={() => openModal(s)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
+                      
+                      {/* ปุ่มผูกสูตร */}
+                      <button onClick={() => openRecipeModal(s)} className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition" title="ผูกสูตรตัดสต็อก">
+                        <Link size={18} />
+                      </button>
+                      
+                      <button onClick={() => openServiceModal(s)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
                         <Edit2 size={18} />
                       </button>
-                      <button onClick={() => handleDelete(s.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                      <button onClick={() => handleDeleteService(s.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
                         <Trash2 size={18} />
                       </button>
                     </td>
@@ -137,53 +147,76 @@ export default function SettingsPage() {
         </div>
       </main>
 
-      {/* Modal เพิ่ม/แก้ไข */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-slate-800">{editingService ? '✏️ แก้ไขบริการ' : '✨ เพิ่มบริการใหม่'}</h3>
-              <button onClick={() => setIsModalOpen(false)}><X size={24} className="text-slate-400 hover:text-slate-600" /></button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">ชื่อบริการ</label>
-                <input 
-                  type="text" 
-                  className="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  placeholder="เช่น ทาสีเจลมือ"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">ราคา (บาท)</label>
-                   <input 
-                     type="number" 
-                     className="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
-                     value={formData.price}
-                     onChange={(e) => setFormData({...formData, price: e.target.value})}
-                   />
-                </div>
-                <div>
-                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">เวลา (นาที)</label>
-                   <input 
-                     type="number" 
-                     className="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
-                     value={formData.duration}
-                     onChange={(e) => setFormData({...formData, duration: e.target.value})}
-                   />
-                </div>
-              </div>
-              <button onClick={handleSave} className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition flex justify-center items-center gap-2 mt-2">
-                <Save size={18} /> บันทึก
-              </button>
-            </div>
+      {/* Modal 1: เพิ่ม/แก้ไข บริการ (เหมือนเดิม) */}
+      {isServiceModalOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl">
+             {/* ... (Form เดิม) ... */}
+             <h3 className="font-bold text-lg mb-4">{editingService ? '✏️ แก้ไขบริการ' : '✨ เพิ่มบริการ'}</h3>
+             <input className="w-full border px-4 py-2 rounded mb-3" placeholder="ชื่อ" value={formData.name} onChange={e=>setFormData({...formData, name:e.target.value})} />
+             <input className="w-full border px-4 py-2 rounded mb-3" type="number" placeholder="ราคา" value={formData.price} onChange={e=>setFormData({...formData, price:e.target.value})} />
+             <input className="w-full border px-4 py-2 rounded mb-3" type="number" placeholder="เวลา (นาที)" value={formData.duration} onChange={e=>setFormData({...formData, duration:e.target.value})} />
+             <div className="flex gap-2">
+               <button onClick={() => setIsServiceModalOpen(false)} className="flex-1 py-2 border rounded">ยกเลิก</button>
+               <button onClick={handleSaveService} className="flex-1 py-2 bg-indigo-600 text-white rounded">บันทึก</button>
+             </div>
           </div>
         </div>
       )}
 
+      {/* Modal 2: ผูกสูตร (Recipes) */}
+      {isRecipeModalOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+            <div className="px-6 py-4 border-b bg-orange-50 flex justify-between items-center">
+               <h3 className="font-bold text-orange-800 flex items-center gap-2"><Package size={20}/> ตัดสต็อกอัตโนมัติ</h3>
+               <button onClick={() => setIsRecipeModalOpen(false)}><X/></button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto">
+               <p className="text-sm text-slate-500 mb-4">เมื่อจบงาน <b>"{editingService?.name}"</b> จะตัดสต็อกดังนี้:</p>
+               
+               {/* List รายการที่ผูกไว้ */}
+               <div className="space-y-2 mb-6">
+                 {currentRecipes.length === 0 ? <p className="text-center text-slate-300 py-4">ยังไม่ได้ผูกสูตร</p> : 
+                   currentRecipes.map((r, i) => (
+                     <div key={i} className="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <span className="font-bold text-slate-700">{r.inventory?.name}</span>
+                        <div className="flex items-center gap-3">
+                           <span className="text-sm text-red-500 font-bold">-{r.quantity_used} {r.inventory?.unit}</span>
+                           <button onClick={() => handleDeleteRecipe(r.id)} className="text-slate-300 hover:text-red-500"><Trash2 size={16}/></button>
+                        </div>
+                     </div>
+                   ))
+                 }
+               </div>
+
+               {/* Form เพิ่มสูตร */}
+               <div className="bg-slate-100 p-4 rounded-xl">
+                  <p className="text-xs font-bold text-slate-400 uppercase mb-2">เพิ่มการตัดสต็อก</p>
+                  <div className="flex gap-2">
+                     <select 
+                       className="flex-1 border rounded-lg px-3 py-2 text-sm"
+                       value={newRecipe.inventory_id}
+                       onChange={e => setNewRecipe({...newRecipe, inventory_id: e.target.value})}
+                     >
+                        <option value="">-- เลือกสินค้า --</option>
+                        {inventory.map(item => (
+                          <option key={item.id} value={item.id}>{item.name} (หน่วย: {item.unit})</option>
+                        ))}
+                     </select>
+                     <input 
+                       type="number" className="w-20 border rounded-lg px-3 py-2 text-sm text-center" placeholder="1"
+                       value={newRecipe.quantity}
+                       onChange={e => setNewRecipe({...newRecipe, quantity: e.target.value})}
+                     />
+                     <button onClick={handleAddRecipe} className="bg-orange-500 text-white p-2 rounded-lg hover:bg-orange-600"><Plus/></button>
+                  </div>
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -141,6 +141,25 @@ export default function BookingModal({ isOpen, onClose, services, onSave }: Prop
     setSelectedPromoId('');
   };
 
+  // คำนวณเวลาเสร็จ (End Time) เพื่อโชว์ให้เห็นภาพ
+const calculateEndTime = () => {
+  if (!formData.start_time || !formData.service_id) return '-';
+
+  const service = services.find(s => s.id.toString() === formData.service_id);
+  const baseDuration = service?.duration || 60; // ค่าเดิม 60 นาที
+  const adjust = Number(formData.duration_adj) || 0;
+  const totalDuration = baseDuration + adjust;
+
+  const [h, m] = formData.start_time.split(':').map(Number);
+  const startDate = new Date();
+  startDate.setHours(h, m + totalDuration); // บวกเวลาเพิ่มเข้าไป
+
+  // จัดรูปแบบ HH:MM
+  const endH = startDate.getHours().toString().padStart(2, '0');
+  const endM = startDate.getMinutes().toString().padStart(2, '0');
+  return `${endH}:${endM}`;
+};
+
   if (!isOpen) return null;
 
   return (
@@ -245,6 +264,10 @@ export default function BookingModal({ isOpen, onClose, services, onSave }: Prop
                 <input type="number" className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="0"
                   value={formData.duration_adj} onChange={e => setFormData({...formData, duration_adj: Number(e.target.value)})} />
               </div>
+
+            <div className="col-span-2 text-right text-xs text-slate-500 mt-1">
+               จะเสร็จเวลาประมาณ: <span className="font-bold text-indigo-600 text-sm">{calculateEndTime()} น.</span>
+            </div>
           </div>
 
           <button type="submit" disabled={loading} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 flex justify-center items-center gap-2 shadow-lg shadow-indigo-200 transition-all active:scale-95">
