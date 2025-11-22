@@ -22,6 +22,7 @@ export default function BookingModal({ isOpen, onClose, services, onSave }: Prop
     start_time: '15:30',
     discount: 0,
     duration_adj: 0
+    quantity: 1, // ✅ เพิ่มตัวนี้ (ค่าเริ่มต้น 1)
   });
 
   // --- Data State ---
@@ -232,6 +233,22 @@ const calculateEndTime = () => {
                 <option key={s.id} value={s.id}>{s.name} (฿{s.price})</option>
               ))}
             </select>
+          </div>
+          
+          {/* ✅ เพิ่มช่องจำนวน (Quantity) ตรงนี้ */}
+          <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100 mt-2">
+             <label className="text-xs font-bold text-indigo-600 uppercase mb-1 block">จำนวน (ครั้ง/นิ้ว)</label>
+             <div className="flex items-center gap-3">
+                <button type="button" onClick={() => setFormData(prev => ({...prev, quantity: Math.max(1, prev.quantity - 1)}))} className="w-8 h-8 bg-white rounded border font-bold">-</button>
+                <input 
+                  type="number" 
+                  className="flex-1 text-center bg-transparent font-bold text-lg outline-none" 
+                  value={formData.quantity}
+                  onChange={e => setFormData({...formData, quantity: Math.max(1, Number(e.target.value))})}
+                />
+                <button type="button" onClick={() => setFormData(prev => ({...prev, quantity: prev.quantity + 1}))} className="w-8 h-8 bg-white rounded border font-bold">+</button>
+             </div>
+             <p className="text-xs text-slate-400 text-center mt-1">ใช้สำหรับบริการที่คิดราคาต่อนิ้ว</p>
           </div>
 
           {/* --- Promotion Section --- */}

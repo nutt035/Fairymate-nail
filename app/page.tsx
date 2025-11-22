@@ -194,7 +194,12 @@ export default function Dashboard() {
       }).eq('id', existingCust.id);
     }
 
-    const finalPrice = (selectedService?.price || 0) - Number(formData.discount);
+    const selectedService = services.find(s => s.id.toString() === formData.service_id);
+    const qty = formData.quantity || 1; // ถ้าไม่มีค่าให้เป็น 1
+    
+    // สูตรใหม่: (ราคาต่อหน่วย x จำนวน) - ส่วนลด
+    const basePrice = (selectedService?.price || 0) * qty; 
+    const finalPrice = basePrice - Number(formData.discount);
 
     const { error } = await supabase.from('bookings').insert([{
       customer_name: formData.customer_name,
@@ -205,6 +210,7 @@ export default function Dashboard() {
       discount: Number(formData.discount),
       duration_adjusted: Number(formData.duration_adj),
       final_price: finalPrice,
+      quantity: qty,
       status: 'pending'
     } as any]);
 
