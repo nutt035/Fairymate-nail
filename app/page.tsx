@@ -338,45 +338,46 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* ปุ่ม PromptPay */}
+          <div className="flex items-center gap-2">
+            {/* 1. ปุ่ม PromptPay (แก้จาก hidden sm:flex เป็น flex เฉยๆ) */}
             <button 
               onClick={() => setShowPromptPay(true)}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 text-sm font-bold shadow-md shadow-pink-200 transition-all"
+              className="flex items-center gap-2 px-3 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 text-xs sm:text-sm font-bold shadow-md shadow-pink-200 transition-all"
             >
-              <CreditCard size={16} /> PromptPay
+              <CreditCard size={16} /> 
+              {/* ซ่อนตัวหนังสือบนมือถือจอเล็กมากๆ ถ้าต้องการ (optional) */}
+              <span className="hidden xs:inline">PromptPay</span>
             </button>
             
-            {/* ปุ่มเปิดร้าน */}
+            {/* 2. ปุ่มเปิดร้าน */}
             <button 
               onClick={handleOpenShop} 
               disabled={isShopOpen}
-              className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold shadow-md transition-all ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold shadow-md transition-all ${
                 isShopOpen 
                   ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none' 
                   : 'bg-green-500 text-white hover:bg-green-600 shadow-green-200'
               }`}
             >
-              <Power size={16} /> {isShopOpen ? 'ร้านเปิดอยู่' : 'เปิดร้าน'}
+              <Power size={16} /> 
+              <span className="hidden xs:inline">{isShopOpen ? 'เปิดอยู่' : 'เปิดร้าน'}</span>
             </button>
 
-            {/* ปุ่มปิดร้าน */}
+            {/* 3. ปุ่มปิดร้าน */}
             <button 
               onClick={handleCloseShop} 
               disabled={!isShopOpen}
-              className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold shadow-md transition-all ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold shadow-md transition-all ${
                 !isShopOpen 
                   ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none' 
                   : 'bg-red-500 text-white hover:bg-red-600 shadow-red-200'
               }`}
             >
-              <LogOut size={16} /> ปิดร้าน
+              <LogOut size={16} /> 
+              <span className="hidden xs:inline">ปิดร้าน</span>
             </button>
 
-            <div className="w-px h-8 bg-slate-200 mx-2 hidden sm:block"></div>
-            <button className="p-2 relative text-slate-400 hover:bg-slate-50 rounded-full">
-              <Bell size={20} /><span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-            </button>
+            <div className="w-px h-8 bg-slate-200 mx-1 hidden sm:block"></div>
             <div className="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold border border-white shadow-sm cursor-pointer">A</div>
           </div>
         </header>
