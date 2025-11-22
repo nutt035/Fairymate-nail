@@ -194,7 +194,6 @@ export default function Dashboard() {
       }).eq('id', existingCust.id);
     }
 
-    const selectedService = services.find(s => s.id.toString() === formData.service_id);
     const qty = formData.quantity || 1; // ถ้าไม่มีค่าให้เป็น 1
     
     // สูตรใหม่: (ราคาต่อหน่วย x จำนวน) - ส่วนลด

@@ -21,7 +21,7 @@ export default function BookingModal({ isOpen, onClose, services, onSave }: Prop
     booking_date: new Date().toISOString().split('T')[0],
     start_time: '15:30',
     discount: 0,
-    duration_adj: 0
+    duration_adj: 0,
     quantity: 1, // ✅ เพิ่มตัวนี้ (ค่าเริ่มต้น 1)
   });
 
@@ -234,7 +234,7 @@ const calculateEndTime = () => {
               ))}
             </select>
           </div>
-          
+
           {/* ✅ เพิ่มช่องจำนวน (Quantity) ตรงนี้ */}
           <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100 mt-2">
              <label className="text-xs font-bold text-indigo-600 uppercase mb-1 block">จำนวน (ครั้ง/นิ้ว)</label>
