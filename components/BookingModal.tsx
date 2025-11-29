@@ -125,13 +125,37 @@ export default function BookingModal({ isOpen, onClose, onSave }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-bold text-slate-500 uppercase">วันที่</label>
-              <input type="date" className="w-full px-4 py-2 border rounded-lg"
-                value={formData.booking_date} onChange={e => setFormData({...formData, booking_date: e.target.value})} required />
+              <input
+                type="date"
+                className="
+                  w-full px-4 py-2 border rounded-lg
+                  h-[45px]
+                  appearance-none
+                  box-border
+                  focus:outline-none
+                "
+                value={formData.booking_date}
+                onChange={e => setFormData({...formData, booking_date: e.target.value})}
+                required
+              />
             </div>
+
             <div>
               <label className="text-xs font-bold text-slate-500 uppercase">เริ่มกี่โมง</label>
-              <input type="time" className="w-full px-4 py-2 border rounded-lg bg-indigo-50 font-bold text-indigo-700"
-                value={formData.start_time} onChange={e => setFormData({...formData, start_time: e.target.value})} required />
+              <input
+                type="time"
+                className="
+                  w-full px-4 py-2 border rounded-lg
+                  h-[45px]
+                  appearance-none
+                  box-border
+                  bg-indigo-50 font-bold text-indigo-700
+                  focus:outline-none
+                "
+                value={formData.start_time}
+                onChange={e => setFormData({...formData, start_time: e.target.value})}
+                required
+              />
             </div>
           </div>
 
