@@ -17,72 +17,85 @@ export default function BookingDetailModal({ isOpen, onClose, booking, onUpdate,
   const [formData, setFormData] = useState({
     booking_date: '',
     start_time: '',
-    duration: '',
+    duration: 60,
     end_time: '',
     manual_service: '',
     price: ''
   });
 
   const [customerInfo, setCustomerInfo] = useState<any>(null);
-  const [overlapWarning, setOverlapWarning] = useState<string | null>(null);   // เตือนคิวชน
+  const [overlapWarning, setOverlapWarning] = useState<string | null>(null);
 
-  // คำนวณเวลาเสร็จอัตโนมัติ
-  function calculateEndTime(start: string, minutes: number) {
-    if (!start || !minutes) return '';
-    const [h, m] = start.split(':').map(Number);
-    const total = h * 60 + m + minutes;
+  // -------------------------
+  // ฟังก์ชันคำนวณเวลาเสร็จปลอดภัย
+  // -------------------------
+  function calculateEndTime(start: string | undefined, minutes: number | undefined) {
+    if (!start || !minutes) return "";
 
-    const endH = Math.floor(total / 60) % 24;
-    const endM = total % 60;
+    if (typeof start !== "string" || !start.includes(":"))
+      return "";
 
-    return `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
+    const [h, m] = start.split(":").map(Number);
+    const totalMin = h * 60 + m + minutes;
+
+    const endH = Math.floor(totalMin / 60) % 24;
+    const endM = totalMin % 60;
+
+    return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
   }
 
-  // โหลด booking เดิม
+  // -------------------------
+  // โหลดข้อมูล booking เดิม
+  // -------------------------
   useEffect(() => {
-    if (booking) {
+    if (!booking) return;
 
-      setFormData({
-        booking_date: booking.booking_date,
-        start_time: booking.start_time,
-        duration: booking.duration || '',
-        end_time: booking.end_time || '',
-        manual_service: booking.manual_service || booking.services?.name || '',
-        price: booking.final_price || ''
-      });
+    setFormData({
+      booking_date: booking.booking_date || "",
+      start_time: booking.start_time || "",
+      duration: booking.duration || 60,
+      end_time: booking.end_time || "",
+      manual_service: booking.manual_service || booking.services?.name || '',
+      price: booking.final_price || ''
+    });
 
-      const fetchCustomerInfo = async () => {
-        const { data } = await supabase
-          .from('customers')
-          .select('facebook, phone')
-          .or(`name.eq.${booking.customer_name},phone.eq.${booking.customer_phone}`)
-          .maybeSingle();
-        
-        if (data) setCustomerInfo(data);
-      };
+    // ดึงข้อมูลลูกค้า
+    const fetchCustomerInfo = async () => {
+      const { data } = await supabase
+        .from('customers')
+        .select('facebook, phone')
+        .or(`name.eq.${booking.customer_name},phone.eq.${booking.customer_phone}`)
+        .maybeSingle();
 
-      fetchCustomerInfo();
-    }
+      if (data) setCustomerInfo(data);
+    };
+
+    fetchCustomerInfo();
   }, [booking]);
 
-  if (!isOpen || !booking) return null;
 
-  const isLocked = booking.status === 'done' || booking.status === 'cancelled';
-
-
-  // ตรวจคิวชน
+  // -------------------------
+  // ฟังก์ชันตรวจคิวซ้อน
+  // -------------------------
   async function checkOverlap(date: string, start: string, end: string) {
-    if (!date || !start || !end) return setOverlapWarning(null);
+    if (!date || !start || !end) {
+      setOverlapWarning(null);
+      return;
+    }
 
     const { data } = await supabase
       .from("bookings")
       .select("id, start_time, end_time")
       .eq("booking_date", date)
-      .neq("id", booking.id);     // ไม่เทียบกับตัวเอง
+      .neq("id", booking.id);
 
-    if (!data) return setOverlapWarning(null);
+    if (!data) {
+      setOverlapWarning(null);
+      return;
+    }
 
-    const toMinutes = (t: string) => {
+    const toMinutes = (t: string | null) => {
+      if (!t || !t.includes(":")) return null;
       const [h, m] = t.split(":").map(Number);
       return h * 60 + m;
     };
@@ -90,15 +103,15 @@ export default function BookingDetailModal({ isOpen, onClose, booking, onUpdate,
     const startMin = toMinutes(start);
     const endMin = toMinutes(end);
 
-    for (let b of data) {
-      if (!b.start_time || !b.end_time) continue;
+    if (startMin == null || endMin == null) return;
 
+    for (let b of data) {
       const bs = toMinutes(b.start_time);
       const be = toMinutes(b.end_time);
+      if (bs == null || be == null) continue;
 
-      const overlap = startMin < be && endMin > bs;
-      if (overlap) {
-        setOverlapWarning(`ช่วงเวลานี้ทับกับคิวหมายเลข #${b.id}`);
+      if (startMin < be && endMin > bs) {
+        setOverlapWarning(`ช่วงเวลานี้ทับกับคิว #${b.id}`);
         return;
       }
     }
@@ -106,18 +119,26 @@ export default function BookingDetailModal({ isOpen, onClose, booking, onUpdate,
     setOverlapWarning(null);
   }
 
-  // คำนวณเวลาเสร็จ + เช็คคิวชน
-  useEffect(() => {
-    const calculated = calculateEndTime(formData.start_time, Number(formData.duration));
-    setFormData(f => ({ ...f, end_time: calculated }));
 
-    checkOverlap(formData.booking_date, formData.start_time, calculated);
+  // -------------------------
+  // คำนวณเวลาเสร็จ + เช็คคิวซ้อน
+  // -------------------------
+  useEffect(() => {
+    if (!formData.start_time || !formData.duration) return;
+
+    const newEnd = calculateEndTime(formData.start_time, Number(formData.duration));
+
+    setFormData(f => ({ ...f, end_time: newEnd }));
+
+    checkOverlap(formData.booking_date, formData.start_time, newEnd);
   }, [formData.start_time, formData.duration, formData.booking_date]);
 
 
-  // บันทึก
+  // -------------------------
+  // บันทึกข้อมูล
+  // -------------------------
   const handleSave = async () => {
-    if (overlapWarning) return; // กันบันทึกถ้าชน
+    if (overlapWarning) return;
 
     await onUpdate(booking.id, {
       booking_date: formData.booking_date,
@@ -131,12 +152,17 @@ export default function BookingDetailModal({ isOpen, onClose, booking, onUpdate,
     onClose();
   };
 
+  if (!isOpen || !booking) return null;
+
+  const isLocked = booking.status === 'done' || booking.status === 'cancelled';
+
+
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
 
         {/* Header */}
-        <div className="px-6 py-4 border-b bg-slate-50 flex justify-between items-center">
+        <div className="px-6 py-4 bg-slate-50 border-b flex justify-between items-center">
           <h3 className="text-lg font-bold">📝 แก้ไขคิว</h3>
           <button onClick={onClose}><X className="text-slate-400" /></button>
         </div>
@@ -156,7 +182,7 @@ export default function BookingDetailModal({ isOpen, onClose, booking, onUpdate,
               <a
                 href={`https://www.facebook.com/search/top?q=${encodeURIComponent(customerInfo.facebook)}`}
                 target="_blank"
-                className="bg-white text-blue-600 px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1"
+                className="bg-white px-3 py-1.5 rounded-lg border text-xs font-bold text-blue-600 flex items-center gap-1"
               >
                 <Facebook size={14} /> ทักแชท
               </a>
@@ -164,7 +190,7 @@ export default function BookingDetailModal({ isOpen, onClose, booking, onUpdate,
           </div>
 
           {/* ฟอร์ม */}
-          <div className={`space-y-3 ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className={`space-y-3 ${isLocked ? "opacity-50 pointer-events-none" : ""}`}>
 
             {/* บริการ */}
             <div>
@@ -179,7 +205,6 @@ export default function BookingDetailModal({ isOpen, onClose, booking, onUpdate,
 
             {/* วันที่ + เวลาเริ่ม */}
             <div className="grid grid-cols-2 gap-3">
-
               <div>
                 <label className="text-xs font-bold text-slate-500">วันที่</label>
                 <input
@@ -199,7 +224,6 @@ export default function BookingDetailModal({ isOpen, onClose, booking, onUpdate,
                   onChange={e => setFormData({ ...formData, start_time: e.target.value })}
                 />
               </div>
-
             </div>
 
             {/* ระยะเวลา */}
@@ -208,9 +232,8 @@ export default function BookingDetailModal({ isOpen, onClose, booking, onUpdate,
               <input
                 type="number"
                 className="w-full border px-3 py-2 rounded-lg"
-                placeholder="เช่น 90"
                 value={formData.duration}
-                onChange={e => setFormData({ ...formData, duration: e.target.value })}
+                onChange={e => setFormData({ ...formData, duration: Number(e.target.value) })}
               />
             </div>
 
@@ -220,14 +243,14 @@ export default function BookingDetailModal({ isOpen, onClose, booking, onUpdate,
               <input
                 type="time"
                 disabled
-                className="w-full border px-3 py-2 rounded-lg bg-slate-100 font-bold text-slate-700 h-[45px]"
+                className="w-full border px-3 py-2 rounded-xl bg-slate-100 font-bold text-slate-700 h-[45px]"
                 value={formData.end_time}
               />
             </div>
 
-            {/* คิวซ้อน */}
+            {/* แจ้งเตือนคิวซ้อน */}
             {overlapWarning && (
-              <div className="p-3 rounded-lg bg-red-100 border border-red-300 text-red-700 text-sm flex gap-2">
+              <div className="p-3 rounded-lg bg-red-100 border border-red-300 text-red-700 text-sm flex items-center gap-2">
                 <AlertTriangle size={18} /> {overlapWarning}
               </div>
             )}
@@ -247,28 +270,29 @@ export default function BookingDetailModal({ isOpen, onClose, booking, onUpdate,
             <button
               disabled={!!overlapWarning}
               onClick={handleSave}
-              className={`w-full py-2 rounded-lg font-bold flex justify-center gap-2 
-                ${overlapWarning ? "bg-slate-400" : "bg-indigo-600"} text-white`}
+              className={`w-full py-2 rounded-lg font-bold text-white flex justify-center gap-2 
+                ${overlapWarning ? "bg-gray-400" : "bg-indigo-600 hover:bg-indigo-700"}
+              `}
             >
               <Save size={18} /> บันทึกการแก้ไข
             </button>
 
           </div>
 
-          <hr className="border-slate-100" />
+          <hr />
 
           {/* ปุ่มล่าง */}
           <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={() => { if (confirm('ยกเลิกคิว?')) onUpdate(booking.id, { status: 'cancelled' }); onClose(); }}
-              className="py-2 border rounded-lg text-sm font-bold text-orange-600"
+              onClick={() => { if (confirm("ยกเลิกคิว?")) onUpdate(booking.id, { status: "cancelled" }); onClose(); }}
+              className="py-2 border rounded-lg font-bold text-sm text-orange-600"
             >
               <Ban size={16} className="inline mr-1" /> ยกเลิก
             </button>
 
             <button
               onClick={() => onDelete(booking.id)}
-              className="py-2 border rounded-lg text-sm font-bold text-red-600 hover:bg-red-50"
+              className="py-2 border rounded-lg font-bold text-sm text-red-600 hover:bg-red-50"
             >
               <Trash2 size={16} className="inline mr-1" /> ลบถาวร
             </button>
