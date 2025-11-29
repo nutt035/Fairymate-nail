@@ -48,15 +48,6 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsO
           />
           
           <NavItem icon={<Calendar size={20} />} label="ตารางคิว" href="/calendar" active={pathname === '/calendar'} />
-          <NavItem icon={<Wallet size={20} />} label="รายจ่าย" href="/expenses" active={pathname === '/expenses'} />
-          {/* 2. เพิ่มเมนูสต็อกสินค้า ตรงนี้! */}
-          <NavItem 
-            icon={<Package size={20} />} 
-            label="สต็อกสินค้า" 
-            href="/stock" 
-            active={pathname === '/stock'} 
-          />
-          
           <NavItem 
             icon={<Receipt size={20} />} 
             label="ใบเสร็จ" 
@@ -65,13 +56,6 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsO
           />
 
           <p className="text-xs font-bold text-slate-400 mt-8 mb-4 px-4 tracking-wider uppercase">Others</p>
-          <NavItem 
-            icon={<Settings size={20} />} 
-            label="ตั้งค่าบริการ" 
-            href="/settings" // <-- ใส่ลิงก์
-            active={pathname === '/settings'} 
-          />
-          <NavItem icon={<Tag size={20} />} label="โปรโมชั่น" href="/promotions" active={pathname === '/promotions'} />
           <NavItem icon={<LogOut size={20} />} label="ออกจากระบบ" href="#" />
         </div>
       </aside>
