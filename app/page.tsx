@@ -147,7 +147,7 @@ export default function Dashboard() {
             <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2"><Menu /></button>
             
             {/* ✅ ปุ่มไปหน้าลูกค้าดูคิว (เพิ่มใหม่) */}
-            <Link href="/customer-view" target="_blank" className="hidden md:flex items-center gap-2 bg-indigo-50 text-indigo-600 px-3 py-2 rounded-lg text-sm font-bold hover:bg-indigo-100 transition">
+            <Link href="/booking" target="_blank" className="hidden md:flex items-center gap-2 bg-indigo-50 text-indigo-600 px-3 py-2 rounded-lg text-sm font-bold hover:bg-indigo-100 transition">
                <ExternalLink size={16}/> หน้าลูกค้าดูคิว
             </Link>
           </div>
