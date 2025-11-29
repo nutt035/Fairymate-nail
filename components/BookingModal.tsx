@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { X, Clock, Save, Search, DollarSign, Hourglass } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Clock, Save, Hourglass, DollarSign } from 'lucide-react';
 import { supabase } from '@/utils/supabase';
 
 interface Props {
@@ -13,19 +13,19 @@ interface Props {
 export default function BookingModal({ isOpen, onClose, onSave }: Props) {
   const [loading, setLoading] = useState(false);
   
-  // State ของฟอร์ม (เน้นกรอกเอง)
+  // State ของฟอร์ม
   const [formData, setFormData] = useState({
     customer_name: '',
     customer_phone: '',
     facebook: '',
     booking_date: new Date().toISOString().split('T')[0],
-    start_time: '15:30', // เวลาเริ่ม (พิมพ์แก้ได้)
-    duration_minutes: 60, // ระยะเวลาทำ (นาที)
-    manual_service: '',   // ชื่อบริการ (พิมพ์เอง)
-    price: '',            // ราคา (พิมพ์เอง)
+    start_time: '15:30',
+    duration_minutes: 60,
+    manual_service: '',
+    price: '',
   });
 
-  // ระบบค้นหาลูกค้า (เหมือนเดิม เพราะสะดวกดี)
+  // ระบบค้นหาลูกค้า
   const [customers, setCustomers] = useState<any[]>([]);
   const [filteredCustomers, setFilteredCustomers] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -57,24 +57,19 @@ export default function BookingModal({ isOpen, onClose, onSave }: Props) {
     setShowSuggestions(false);
   };
 
-  // 🕒 ฟังก์ชันคำนวณเวลาเสร็จ (Start + Duration)
   const calculateEndTime = () => {
     if (!formData.start_time) return '-';
     const [h, m] = formData.start_time.split(':').map(Number);
     const date = new Date();
     date.setHours(h, m + Number(formData.duration_minutes));
-    
-    const endH = date.getHours().toString().padStart(2, '0');
-    const endM = date.getMinutes().toString().padStart(2, '0');
-    return `${endH}:${endM}`;
+    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await onSave(formData); // ส่งข้อมูลไปบันทึก
+    await onSave(formData);
     setLoading(false);
-    // Reset Form
     setFormData({ 
       customer_name: '', customer_phone: '', facebook: '',
       booking_date: new Date().toISOString().split('T')[0],
@@ -87,7 +82,8 @@ export default function BookingModal({ isOpen, onClose, onSave }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      {/* ✅ ปรับ max-w-lg ให้กว้างขึ้นสำหรับ iPad */}
+      <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         
         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -98,78 +94,87 @@ export default function BookingModal({ isOpen, onClose, onSave }: Props) {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
           
-          {/* 1. ชื่อลูกค้า */}
+          {/* ชื่อลูกค้า */}
           <div className="relative">
-            <label className="text-xs font-bold text-slate-500 uppercase">ลูกค้า</label>
-            <input type="text" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">ชื่อลูกค้า</label>
+            <input type="text" className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-base"
               placeholder="พิมพ์ชื่อ..." value={formData.customer_name} onChange={handleNameChange} required />
+            
             {showSuggestions && filteredCustomers.length > 0 && (
               <div className="absolute z-10 w-full bg-white border shadow-xl max-h-40 overflow-y-auto mt-1 rounded-lg">
                 {filteredCustomers.map(c => (
-                  <div key={c.id} onClick={() => selectCustomer(c)} className="px-4 py-2 hover:bg-indigo-50 cursor-pointer border-b">
-                    {c.name} <span className="text-xs text-gray-400">{c.phone}</span>
+                  <div key={c.id} onClick={() => selectCustomer(c)} className="px-4 py-3 hover:bg-indigo-50 cursor-pointer border-b text-sm">
+                    <span className="font-bold text-slate-700">{c.name}</span> <span className="text-slate-400 ml-2">{c.phone}</span>
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-             <div><label className="text-xs font-bold text-slate-500">เบอร์โทร</label><input type="text" className="w-full px-4 py-2 border rounded-lg" value={formData.customer_phone} onChange={e=>setFormData({...formData, customer_phone:e.target.value})}/></div>
-             <div><label className="text-xs font-bold text-slate-500">Facebook</label><input type="text" className="w-full px-4 py-2 border rounded-lg" value={formData.facebook} onChange={e=>setFormData({...formData, facebook:e.target.value})}/></div>
+          {/* เบอร์ + Facebook (เรียงซ้อนบนมือถือ, แนวนอนบนไอแพด) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+             <div>
+               <label className="text-xs font-bold text-slate-500 mb-1 block">เบอร์โทร</label>
+               <input type="text" className="w-full px-4 py-2 border rounded-xl outline-none" value={formData.customer_phone} onChange={e=>setFormData({...formData, customer_phone:e.target.value})}/>
+             </div>
+             <div>
+               <label className="text-xs font-bold text-slate-500 mb-1 block">Facebook</label>
+               <input type="text" className="w-full px-4 py-2 border rounded-xl outline-none" value={formData.facebook} onChange={e=>setFormData({...formData, facebook:e.target.value})}/>
+             </div>
           </div>
 
-          <hr />
+          <hr className="border-slate-100 my-2" />
 
-          {/* 2. วันและเวลา (ไฮไลท์สำคัญ) */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* วัน + เวลา */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold text-slate-500 uppercase">วันที่</label>
-              <input type="date" className="w-full px-4 py-2 border rounded-lg"
+              <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">วันที่</label>
+              <input type="date" className="w-full px-4 py-2 border rounded-xl outline-none"
                 value={formData.booking_date} onChange={e => setFormData({...formData, booking_date: e.target.value})} required />
             </div>
             <div>
-              <label className="text-xs font-bold text-slate-500 uppercase">เริ่มกี่โมง</label>
-              <input type="time" className="w-full px-4 py-2 border rounded-lg bg-indigo-50 font-bold text-indigo-700"
+              <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">เริ่มกี่โมง</label>
+              <input type="time" className="w-full px-4 py-2 border rounded-xl bg-indigo-50 font-bold text-indigo-700 outline-none"
                 value={formData.start_time} onChange={e => setFormData({...formData, start_time: e.target.value})} required />
             </div>
           </div>
 
-          {/* ระยะเวลา (คำนวณเวลาจบ) */}
-          <div className="bg-slate-100 p-3 rounded-xl flex items-center justify-between">
-             <div className="flex items-center gap-2">
-                <Hourglass size={18} className="text-slate-400"/>
+          {/* คำนวณเวลา */}
+          <div className="bg-slate-100 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+             <div className="flex items-center gap-3">
+                <div className="p-2 bg-white rounded-lg text-slate-400"><Hourglass size={20}/></div>
                 <div>
-                   <label className="text-xs font-bold text-slate-500 block">ทำกี่นาที?</label>
-                   <input type="number" className="w-20 bg-white border px-2 py-1 rounded text-center font-bold" 
+                   <label className="text-xs font-bold text-slate-500 block mb-1">ทำกี่นาที?</label>
+                   <input type="number" className="w-24 bg-white border px-3 py-1 rounded-lg text-center font-bold outline-none" 
                      value={formData.duration_minutes} onChange={e=>setFormData({...formData, duration_minutes:Number(e.target.value)})} />
                 </div>
              </div>
-             <div className="text-right">
+             <div className="text-left sm:text-right pt-2 sm:pt-0 border-t sm:border-0 border-slate-200">
                 <p className="text-xs text-slate-400">เสร็จเวลา (โดยประมาณ)</p>
-                <p className="text-xl font-bold text-green-600">{calculateEndTime()} น.</p>
+                <p className="text-2xl font-bold text-green-600 leading-none mt-1">{calculateEndTime()} น.</p>
              </div>
           </div>
 
-          {/* 3. บริการและราคา (กรอกเองล้วนๆ) */}
+          {/* บริการ */}
           <div>
-            <label className="text-xs font-bold text-slate-500 uppercase">ทำอะไรบ้าง?</label>
-            <input type="text" className="w-full px-4 py-2 border rounded-lg"
+            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">ทำอะไรบ้าง?</label>
+            <input type="text" className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-base"
               placeholder="เช่น ทาสีเจลมือ + ต่อ PVC"
               value={formData.manual_service} onChange={e => setFormData({...formData, manual_service: e.target.value})} required />
           </div>
 
+          {/* ราคา */}
           <div>
-            <label className="text-xs font-bold text-slate-500 uppercase">ราคา (บาท)</label>
+            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">ราคา (บาท)</label>
             <div className="relative">
-               <DollarSign size={16} className="absolute left-3 top-3 text-slate-400"/>
-               <input type="number" className="w-full px-4 py-2 pl-9 border rounded-lg font-bold text-lg"
+               <DollarSign size={18} className="absolute left-3 top-3.5 text-slate-400"/>
+               <input type="number" className="w-full px-4 py-3 pl-10 border rounded-xl font-bold text-xl outline-none"
                  placeholder="0" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required />
             </div>
           </div>
 
-          <button type="submit" disabled={loading} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 flex justify-center items-center gap-2 shadow-lg shadow-indigo-200 active:scale-95 transition-all">
-            <Save size={18} /> {loading ? 'บันทึก...' : 'ลงคิวทันที'}
+          <button type="submit" disabled={loading} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 flex justify-center items-center gap-2 shadow-lg shadow-indigo-200 active:scale-95 transition-all mt-4">
+            <Save size={20} /> {loading ? 'กำลังบันทึก...' : 'ลงคิวทันที'}
           </button>
         </form>
       </div>
