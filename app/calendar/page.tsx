@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/utils/supabase';
 import Sidebar from '@/components/Sidebar';
 import { Menu, Calendar as CalIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import BookingDetailModal from '@/components/BookingDetailModal';
 
 export default function CalendarPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [bookings, setBookings] = useState<any[]>([]);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
 
   // ดึงข้อมูลทั้งหมดมา
   const fetchBookings = async () => {
@@ -30,6 +32,21 @@ export default function CalendarPage() {
   const month = currentDate.getMonth();
   const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0=Sun, 1=Mon
   const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const handleUpdateBooking = async (id: number, updates: any) => {
+    await supabase.from('bookings').update(updates).eq('id', id);
+    fetchBookings(); // โหลดข้อมูลใหม่
+    setSelectedBooking(null); // ปิด Modal
+  };
+
+  const handleDeleteBooking = async (id: number) => {
+    if(confirm('ลบถาวร?')) {
+        await supabase.from('bookings').delete().eq('id', id);
+        fetchBookings();
+        setSelectedBooking(null);
+    }
+  };
+
 
   const daysArray = [];
   // เติมช่องว่างข้างหน้า (ถ้าวันที่ 1 ไม่ใช่วันอาทิตย์)
@@ -71,7 +88,7 @@ export default function CalendarPage() {
               {daysArray.map((date, i) => {
                 if (!date) return <div key={i} className="bg-slate-50/50"></div>;
                 
-                const dateStr = date.toISOString().split('T')[0];
+                const dateStr = date.toLocaleDateString('en-CA');
                 // หาคิวของวันนี้
                 const dayBookings = bookings.filter(b => b.booking_date === dateStr);
                 const isToday = new Date().toDateString() === date.toDateString();
@@ -84,7 +101,7 @@ export default function CalendarPage() {
                     
                     <div className="space-y-1 overflow-y-auto max-h-[80px] scrollbar-hide">
                       {dayBookings.map(b => (
-                        <div key={b.id} className={`text-[10px] px-1.5 py-1 rounded truncate font-medium
+                        <div key={b.id} onClick={() => setSelectedBooking(b)} className={`text-[10px] px-1.5 py-1 rounded truncate font-medium
                           ${b.status === 'done' ? 'bg-green-100 text-green-700' : 
                             b.status === 'cancelled' ? 'bg-red-100 text-red-700 line-through opacity-50' : 
                             'bg-indigo-100 text-indigo-700'}`}>
@@ -98,6 +115,16 @@ export default function CalendarPage() {
             </div>
           </div>
         </div>
+
+        {/* ✅ เพิ่ม Modal ไว้ตรงนี้ */}
+        <BookingDetailModal 
+          isOpen={!!selectedBooking} 
+          onClose={() => setSelectedBooking(null)} 
+          booking={selectedBooking} 
+          onUpdate={handleUpdateBooking} 
+          onDelete={handleDeleteBooking} 
+        />
+
       </main>
     </div>
   );

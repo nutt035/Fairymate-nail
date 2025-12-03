@@ -52,7 +52,7 @@ export default function BookingDetailModal({ isOpen, onClose, booking, onUpdate,
 
     setFormData({
       booking_date: booking.booking_date || "",
-      start_time: booking.start_time || "",
+      start_time: booking.start_time ? booking.start_time.slice(0, 5) : "",
       duration: booking.duration || 60,
       end_time: booking.end_time || "",
       manual_service: booking.manual_service || booking.services?.name || '',

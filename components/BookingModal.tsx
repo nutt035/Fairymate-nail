@@ -18,7 +18,7 @@ export default function BookingModal({ isOpen, onClose, onSave }: Props) {
     customer_name: '',
     customer_phone: '',
     facebook: '',
-    booking_date: new Date().toISOString().split('T')[0],
+    booking_date: new Date().toLocaleDateString('en-CA'),
     start_time: '15:30',
     duration_minutes: 60,
     manual_service: '',
