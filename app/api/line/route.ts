@@ -6,15 +6,15 @@ export async function POST(request: Request) {
 
     // ใช้ env เท่านั้น (อย่าใส่ token hardcode ลงในโค้ด!)
     const LINE_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN || process.env.LINE_CHANNEL_TOKEN;
-    const GROUP_ID = process.env.LINE_GROUP_ID;
+    const recipientId = process.env.LINE_RECIPIENT_IDS?.split(',')[0]?.trim() || process.env.LINE_GROUP_ID;
 
-    if (!LINE_ACCESS_TOKEN || !GROUP_ID) {
-      return NextResponse.json({ error: 'ยังไม่ได้ตั้งค่า LINE_CHANNEL_ACCESS_TOKEN / LINE_GROUP_ID' }, { status: 500 });
+    if (!LINE_ACCESS_TOKEN || !recipientId) {
+      return NextResponse.json({ error: 'ยังไม่ได้ตั้งค่า LINE_CHANNEL_ACCESS_TOKEN / LINE_RECIPIENT_IDS' }, { status: 500 });
     }
 
     // สร้างข้อความที่จะส่ง (ส่งเป็นรูปภาพ)
     const body = {
-      to: GROUP_ID,
+      to: recipientId,
       messages: [
         {
           type: "text",

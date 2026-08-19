@@ -33,7 +33,6 @@ export async function GET() {
   const line = {
     channelSecret: isSet(env.LINE_CHANNEL_SECRET),
     channelAccessToken: isSet(env.LINE_CHANNEL_ACCESS_TOKEN),
-    groupId: isSet(env.LINE_GROUP_ID),
     recipientIds: isSet(env.LINE_RECIPIENT_IDS),
   };
 

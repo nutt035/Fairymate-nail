@@ -6,10 +6,10 @@ export async function POST(request: Request) {
     const { message } = await request.json();
     
     const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-    const groupId = process.env.LINE_GROUP_ID;
+    const recipientId = process.env.LINE_RECIPIENT_IDS?.split(',')[0]?.trim() || process.env.LINE_GROUP_ID;
 
-    if (!token || !groupId) {
-      return NextResponse.json({ error: 'Missing Token or Group ID' }, { status: 500 });
+    if (!token || !recipientId) {
+      return NextResponse.json({ error: 'Missing Token or LINE_RECIPIENT_IDS' }, { status: 500 });
     }
 
     // ส่งไปที่ LINE Messaging API
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
-        to: groupId,
+        to: recipientId,
         // ตรงนี้สำคัญ! เราส่ง message ก้อนที่เราสร้างจาก utils ไปตรงๆ เลย
         messages: [ message ] 
       }),

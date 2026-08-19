@@ -23,7 +23,6 @@ interface StatusData {
   line: {
     channelSecret: boolean;
     channelAccessToken: boolean;
-    groupId: boolean;
     recipientIds: boolean;
   };
   messenger: {
@@ -138,7 +137,7 @@ export default function WebhooksPage() {
   };
 
   const allLineSet = status
-    ? status.line.channelSecret && status.line.channelAccessToken && (status.line.groupId || status.line.recipientIds)
+    ? status.line.channelSecret && status.line.channelAccessToken && status.line.recipientIds
     : false;
   const allMessengerSet = status
     ? status.messenger.appSecret &&
@@ -177,7 +176,7 @@ export default function WebhooksPage() {
             <ul className="list-disc list-inside space-y-0.5">
               {!status?.line.channelSecret && <li>LINE: ยังขาด <code className="bg-amber-100 px-1 rounded">LINE_CHANNEL_SECRET</code> (ก๊อปจาก LINE Developers Console)</li>}
               {!status?.line.channelAccessToken && <li>LINE: ยังขาด <code className="bg-amber-100 px-1 rounded">LINE_CHANNEL_ACCESS_TOKEN</code></li>}
-              {!status?.line.groupId && !status?.line.recipientIds && <li>LINE: ยังขาด <code className="bg-amber-100 px-1 rounded">LINE_GROUP_ID</code> (หรือ LINE_RECIPIENT_IDS) สำหรับแจ้งเตือนคิวใหม่</li>}
+              {!status?.line.recipientIds && <li>LINE: ยังขาด <code className="bg-amber-100 px-1 rounded">LINE_RECIPIENT_IDS</code> สำหรับแจ้งเตือนคิวใหม่</li>}
               {!status?.messenger.appSecret && <li>Messenger: ยังขาด <code className="bg-amber-100 px-1 rounded">FACEBOOK_APP_SECRET</code> (จาก Meta Developer)</li>}
               {!status?.messenger.pageAccessToken && <li>Messenger: ยังขาด <code className="bg-amber-100 px-1 rounded">FACEBOOK_PAGE_ACCESS_TOKEN</code></li>}
               {!status?.messenger.recipientIds && status?.messenger.approvedAdmins === 0 && (
@@ -240,7 +239,7 @@ export default function WebhooksPage() {
             <div className="space-y-1.5 text-sm">
               <EnvRow label="LINE_CHANNEL_SECRET" ok={status?.line.channelSecret} />
               <EnvRow label="LINE_CHANNEL_ACCESS_TOKEN" ok={status?.line.channelAccessToken} />
-              <EnvRow label="LINE_GROUP_ID / LINE_RECIPIENT_IDS" ok={status?.line.groupId || status?.line.recipientIds} />
+              <EnvRow label="LINE_RECIPIENT_IDS" ok={status?.line.recipientIds} />
             </div>
 
             {/* Test button */}
