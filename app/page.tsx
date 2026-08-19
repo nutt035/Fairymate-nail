@@ -124,29 +124,32 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ── 4. โปรโมชั่น (horizontal scroll) ──────────────────────────── */}
+        {/* ── 4. โปรโมชั่น (horizontal scroll cards) ────────────────────── */}
         {promotions.length > 0 && (
           <section id="promos">
-            <h2 className="text-lg font-extrabold text-gray-900 mb-3">โปรโมชั่นพิเศษ ✨</h2>
-            <div className="flex overflow-x-auto gap-3 pb-3 snap-x snap-mandatory -mx-5 px-5 scrollbar-hide">
+            <h2 className="text-base font-extrabold text-gray-900 mb-1">โปรโมชั่นพิเศษ ✨</h2>
+            <p className="text-[11px] text-gray-400 mb-3">ข้อเสนอสุดคุ้มที่ไม่ควรพลาด</p>
+            <div className="flex overflow-x-auto gap-3 pb-2 snap-x snap-mandatory -mx-5 px-5 scrollbar-hide">
               {promotions.map((promo) => {
                 const promoText =
                   promo.discount_type === 'percent' ? `ลด ${promo.value}%` : `ลด ฿${Number(promo.value).toLocaleString('th-TH')}`;
                 return (
-                  <div key={promo.id} className="snap-center shrink-0 w-[240px] bg-gradient-to-br from-rose-400 via-pink-500 to-fuchsia-500 rounded-2xl p-[2px] shadow-lg shadow-pink-200/50">
-                    <div className="bg-white/95 backdrop-blur-sm rounded-[14px] h-full p-3.5 flex flex-col">
-                      <div className="flex items-start gap-2.5 mb-2">
-                        <div className="w-9 h-9 rounded-xl bg-rose-100 flex items-center justify-center shrink-0">
-                          <Tag size={16} className="text-rose-600" />
+                  <div key={promo.id} className="snap-center shrink-0 w-[220px] bg-gradient-to-br from-rose-400 via-pink-500 to-fuchsia-500 rounded-2xl p-[2px] shadow-lg shadow-pink-200/50">
+                    <div className="bg-white rounded-[14px] h-full p-4 flex flex-col">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                          <Tag size={18} className="text-emerald-500" />
                         </div>
                         <div className="min-w-0">
                           <h3 className="font-bold text-gray-900 text-sm line-clamp-1">{promo.name}</h3>
-                          <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">{promoText}</span>
+                          <span className="inline-block mt-0.5 text-xs font-black text-pink-600">ราคา ฿{Number(promo.value).toLocaleString('th-TH')}</span>
                         </div>
                       </div>
-                      <div className="mt-auto pt-2 border-t border-gray-100/50 flex items-center justify-between text-[10px] font-semibold text-gray-400">
-                        <span>หน้าร้าน</span>
-                        <a href="/booking" className="text-pink-500 hover:text-pink-600">จองเลย →</a>
+                      <p className="text-[10px] text-gray-400 mb-3">โปรโมชั่นหน้าร้าน</p>
+                      <div className="mt-auto">
+                        <a href="/booking" className="block w-full text-center py-2 bg-pink-50 text-pink-600 text-xs font-bold rounded-xl hover:bg-pink-100 transition-colors">
+                          จองเลย
+                        </a>
                       </div>
                     </div>
                   </div>
