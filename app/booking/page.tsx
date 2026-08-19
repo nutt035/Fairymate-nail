@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import {
+import { useSearchParams } from 'next/navigation';  import {
   Sparkles, ChevronLeft, ChevronRight, Check, Clock,
   CalendarDays, User, Phone, FileText, Loader2, ArrowRight,
-  MessageCircle, CheckCircle2, Facebook, Tag, ShoppingBag,
+  MessageCircle, CheckCircle2, Facebook, Tag, ShoppingBag, Home,
 } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -60,7 +59,7 @@ function BookingPage() {
   const linkedLineUserId = searchParams.get('line_uid') || '';
   const linkedMessengerPsid = searchParams.get('psid') || '';
 
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(searchParams.get('date') ? 1 : 0);
 
   // Data
   const [services, setServices] = useState<Service[]>([]);
@@ -72,7 +71,7 @@ function BookingPage() {
   // Form
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [promotionId, setPromotionId] = useState('');
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState(searchParams.get('date') || '');
   const [startTime, setStartTime] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -302,7 +301,12 @@ function BookingPage() {
               <ChevronLeft size={18} />
             </button>
           ) : (
-            <img src="/logo.svg" alt="Fairymate.Nail" className="w-8 h-8 rounded-xl shadow-sm" />
+            <a
+              href="/"
+              className="w-8 h-8 rounded-xl bg-pink-50 flex items-center justify-center text-pink-500 hover:bg-pink-100 transition-colors"
+            >
+              <Home size={16} />
+            </a>
           )}
           <div className="flex-1">
             <p className="text-sm font-bold text-slate-800">Fairymate.Nail</p>
@@ -694,13 +698,20 @@ function BookingPage() {
       {/* ── Bottom Action Bar ────────────────────────────────────────────────── */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-primary-light p-4 z-20">
         <div className="max-w-xl mx-auto flex items-center gap-3">
-          {step > 0 && (
+          {step > 0 ? (
             <button
               onClick={() => setStep((s) => s - 1)}
               className="px-5 py-3 rounded-xl border border-primary/20 text-slate-600 text-sm font-medium hover:bg-primary-light transition-all"
             >
               <ChevronLeft size={16} className="inline" /> ย้อนกลับ
             </button>
+          ) : (
+            <a
+              href="/"
+              className="px-5 py-3 rounded-xl border border-primary/20 text-slate-600 text-sm font-medium hover:bg-primary-light transition-all"
+            >
+              <ChevronLeft size={16} className="inline" /> หน้าหลัก
+            </a>
           )}
           <div className="flex-1" />
           {step < 3 ? (

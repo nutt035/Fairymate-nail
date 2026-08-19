@@ -9,6 +9,7 @@ export function middleware(req: NextRequest) {
     pathname === '/' ||
     pathname === '/booking' ||
     pathname.startsWith('/booking/') ||
+    pathname === '/availability' ||
     pathname.startsWith('/api/public/') ||
     pathname.startsWith('/api/webhooks/') ||
     pathname.startsWith('/api/check-queue') ||

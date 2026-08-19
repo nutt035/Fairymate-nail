@@ -151,7 +151,7 @@ export default function LandingPage() {
         <section>
           <div className="grid grid-cols-2 gap-4">
             <MenuItem href="/booking" icon={<CalendarHeart size={28} />} iconBg="bg-gradient-to-br from-rose-400 to-pink-500 text-white shadow-lg shadow-pink-200" title="จองคิว" subtitle="เลือกวัน & เวลา" color="text-pink-300" />
-            <MenuItem href="/booking" icon={<Search size={28} />} iconBg="bg-blue-50 text-blue-500" title="เช็คคิวว่าง" subtitle="ดูเวลาว่างของร้าน" color="text-blue-300" />
+            <MenuItem href="/availability" icon={<Search size={28} />} iconBg="bg-blue-50 text-blue-500" title="เช็คคิวว่าง" subtitle="ดูเวลาว่างของร้าน" color="text-blue-300" />
             <MenuItem href={lineUrl} external icon={<MessageCircle size={28} />} iconBg="bg-green-50 text-green-500" title="ติดต่อร้าน" subtitle="ทัก LINE สอบถามได้" color="text-green-300" />
             <MenuItem href={messengerUrl} external icon={<Facebook size={28} />} iconBg="bg-sky-50 text-sky-500" title="Messenger" subtitle="แชทกับแอดมิน" color="text-sky-300" />
             <MenuItem href="#services" icon={<BookOpen size={28} />} iconBg="bg-rose-50 text-rose-500" title="บริการของเรา" subtitle="เจล / ต่อเล็บ / เพ้นท์" color="text-rose-300" />
