@@ -3,39 +3,58 @@ import { supabase } from '@/utils/supabase';
 import { generateWarningFlex } from '@/utils/lineService';
 
 // ฟังก์ชันสำหรับส่ง LINE (ยิงตรงจากหลังบ้านไปหา LINE เลย)
-const sendLinePush = async (messageObject: any) => {
+// ส่งไปทุกคนใน LINE_RECIPIENT_IDS (คั่นด้วยเครื่องหมายจุลภาค) — รองรับทั้งกลุ่ม/รายคน
+const sendLinePush = async (messageObject: Record<string, unknown>) => {
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-  const groupId = process.env.LINE_GROUP_ID;
-  
-  if (!token || !groupId) return false;
+  const recipients = (process.env.LINE_RECIPIENT_IDS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
 
-  try {
-    const response = await fetch('https://api.line.me/v2/bot/message/push', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        to: groupId,
-        messages: [messageObject]
-      }),
-    });
-    return response.ok;
-  } catch (e) {
+  if (!token || recipients.length === 0) {
+    console.warn('check-queue: ขาด LINE_CHANNEL_ACCESS_TOKEN หรือ LINE_RECIPIENT_IDS');
     return false;
   }
+
+  let sent = 0;
+  for (const recipientId of recipients) {
+    try {
+      const response = await fetch('https://api.line.me/v2/bot/message/push', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          to: recipientId,
+          messages: [messageObject]
+        }),
+      });
+      if (response.ok) {
+        sent++;
+      } else {
+        console.error('check-queue: LINE push failed', response.status, await response.text());
+      }
+    } catch (e) {
+      console.error('check-queue: LINE push error', e);
+    }
+  }
+  return sent > 0;
 };
 
 // ฟังก์ชันนี้จะทำงานเมื่อเราเข้าลิงก์นี้
 export async function GET(request: Request) {
   try {
-    // 1. เช็ค Password (กันคนอื่นมากดเล่น)
+    // 1. เช็ค Password (กันคนอื่นมากดเล่น) — ตั้งค่า CHECK_QUEUE_KEY ใน env
     const { searchParams } = new URL(request.url);
     const key = searchParams.get('key');
-    
-    // *ตั้งรหัสลับตรงนี้ (เช่น 'test1234')
-    if (key !== 'test1234') { 
+    const expectedKey = process.env.CHECK_QUEUE_KEY;
+
+    // ถ้ายังไม่ได้ตั้ง env → ปิดใช้งาน (fail closed) ไม่ fallback เป็นรหัสตายตัว
+    if (!expectedKey) {
+      return NextResponse.json({ error: 'ยังไม่ได้ตั้งค่า CHECK_QUEUE_KEY' }, { status: 500 });
+    }
+    if (key !== expectedKey) {
       return NextResponse.json({ error: 'รหัสไม่ถูกต้อง' }, { status: 401 });
     }
 

@@ -1,13 +1,12 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  // 1. ปิดการตรวจสอบ TypeScript (เส้นแดงๆ) ตอน Deploy
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
+  // Standalone output สำหรับ Docker
+  output: 'standalone',
+
+  // ปิด TypeScript errors ตอน build
   typescript: {
     ignoreBuildErrors: true,
-  },
-  
-  // 2. ปิดการตรวจสอบ ESLint (กฎระเบียบโค้ด) ตอน Deploy
-  eslint: {
-    ignoreDuringBuilds: true,
   },
 };
 

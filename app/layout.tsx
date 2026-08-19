@@ -22,8 +22,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="th">
-      <body className={`${prompt.className} antialiased bg-[#F1F5F9]`}>
-        {children}
+      <head>
+        {/* ⭐ สำคัญมาก: แก้ปัญหาหน้าเว็บกว้างเกินจอมือถือทั้งหมด */}
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
+      <body className={`${prompt.className} ${prompt.variable} antialiased bg-[#F8F9FA] text-slate-800 min-h-screen w-full overflow-x-hidden`}>
+        <div className="w-full max-w-full mx-auto">
+          {children}
+        </div>
       </body>
     </html>
   );

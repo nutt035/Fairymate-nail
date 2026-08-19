@@ -1,80 +1,95 @@
-'use client';
+"use client";
+import Link from 'next/link';
+import Image from 'next/image';
+import { usePathname } from 'next/navigation';
+import { LayoutDashboard, CalendarClock, Receipt, User, X, Package, Wallet, Users, Tag, Settings, Webhook, MessagesSquare } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-import { LayoutDashboard, Calendar, Users, Receipt, Settings, LogOut, X, Package, Wallet, Tag } from 'lucide-react';
-import { usePathname } from 'next/navigation'; // เพิ่มตัวช่วยเช็คหน้าปัจจุบัน
+const menuItems = [
+  { href: '/admin/dashboard', label: 'แดชบอร์ด', icon: LayoutDashboard },
+  { href: '/admin/queues', label: 'หน้าจัดการคิว', icon: CalendarClock },
+  { href: '/admin/customers', label: 'ลูกค้า', icon: Users },
+  { href: '/admin/stock', label: 'จัดการสต็อก', icon: Package },
+  { href: '/admin/finance', label: 'บัญชีรายรับ-จ่าย', icon: Wallet },
+  { href: '/admin/receipts', label: 'ใบเสร็จย้อนหลัง', icon: Receipt },
+  { href: '/admin/promotions', label: 'โปรโมชั่น', icon: Tag },
+  { href: '/admin/services', label: 'บริการและสูตร', icon: Settings },
+  { href: '/admin/messenger', label: 'แอดมินแชท', icon: MessagesSquare },
+  { href: '/admin/webhooks', label: 'เชื่อมต่อแชท', icon: Webhook },
+];
 
-export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (v: boolean) => void }) {
-  const pathname = usePathname(); // เช็คว่าตอนนี้อยู่หน้าไหน
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const pathname = usePathname();
 
   return (
     <>
-      {/* ฉากหลังดำ (Mobile) */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-sm" onClick={() => setIsOpen(false)} />
-      )}
+      {/* Mobile Overlay (พื้นหลังสีดำจาง ๆ เวลากดเมนูในมือถือ) */}
+      <div
+        className={cn(
+          "fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity duration-200",
+          isOpen ? "opacity-100 visible" : "opacity-0 invisible"
+        )}
+        onClick={onClose}
+      />
 
-      {/* ตัวเมนู */}
-      <aside className={`
-        fixed lg:static inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200 
-        transform transition-transform duration-300 ease-in-out flex flex-col h-full
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
-      `}>
-        <div className="h-20 flex items-center justify-between px-8 border-b border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
-              <span className="text-white font-bold text-lg">N</span>
-            </div>
-            <span className="text-xl font-bold text-slate-800">Fairymate Nail</span>
+      {/* Sidebar Content */}
+      <aside className={cn(
+        "fixed left-0 top-0 z-50 h-screen w-64 bg-white border-r border-slate-100 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0",
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="p-6 flex flex-col items-center gap-4 border-b border-slate-50 relative">
+          {/* Close Button (Mobile Only) */}
+          <button onClick={onClose} className="absolute right-4 top-4 text-slate-400 md:hidden">
+            <X size={24} />
+          </button>
+
+          {/* Logo Section */}
+          <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-primary/20 shadow-md">
+            <Image
+              src="/logo.svg"
+              alt="Fairymate Logo"
+              fill
+              className="object-cover"
+            />
           </div>
-          <button onClick={() => setIsOpen(false)} className="lg:hidden text-slate-400"><X size={24} /></button>
+          <h1 className="text-xl font-bold text-primary tracking-tight">Fairymate.Nail</h1>
         </div>
 
-        <div className="p-6 space-y-1 overflow-y-auto flex-1">
-          <p className="text-xs font-bold text-slate-400 mb-4 px-4 tracking-wider uppercase">Menu</p>
-          
-          {/* 1. Dashboard */}
-          <NavItem 
-            icon={<LayoutDashboard size={20} />} 
-            label="Dashboard" 
-            href="/" 
-            active={pathname === '/'} 
-          />
+        <nav className="flex-1 px-4 space-y-2 mt-6 overflow-y-auto">
+          {menuItems.map((item) => {
+            const isActive = pathname === item.href || (item.href === '/admin/queues' && pathname === '/admin');
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onClose} // ปิดเมนูเมื่อกดเลือก (ในมือถือ)
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200",
+                  isActive
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                )}
+              >
+                <Icon size={20} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
 
-          <NavItem 
-            icon={<Users size={20} />} 
-            label="ลูกค้า" 
-            href="/customers" 
-            active={pathname === '/customers'} 
-          />
-          
-          <NavItem icon={<Calendar size={20} />} label="ตารางคิว" href="/calendar" active={pathname === '/calendar'} />
-          <NavItem 
-            icon={<Receipt size={20} />} 
-            label="ใบเสร็จ" 
-            href="/receipts"  // <-- แก้จาก # เป็น /receipts
-            active={pathname === '/receipts'} // <-- เพิ่ม active check
-          />
-
-          <p className="text-xs font-bold text-slate-400 mt-8 mb-4 px-4 tracking-wider uppercase">Others</p>
-          <NavItem icon={<LogOut size={20} />} label="ออกจากระบบ" href="#" />
+        <div className="p-4 border-t border-slate-100">
+          <Link href="/booking" target="_blank" className="flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-500 hover:bg-slate-50 transition-colors">
+            <User size={20} />
+            <span className="text-sm">หน้าลูกค้าดูคิว</span>
+          </Link>
         </div>
       </aside>
     </>
-  );
-}
-
-// Helper Component (อัปเกรดให้รับ href ได้)
-function NavItem({ icon, label, href = "#", active }: any) {
-  return (
-    <a 
-      href={href} 
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-        active 
-          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
-          : 'text-slate-500 hover:bg-slate-50 hover:text-indigo-600'
-      }`}
-    >
-      {icon} <span>{label}</span>
-    </a>
   );
 }
